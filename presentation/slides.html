@@ -1,0 +1,260 @@
+<!doctype html>
+<!--
+
+This presentation was made for NodePDX, February 11, 2012
+
+-->
+<html>
+<head>
+<title>Building Applications With Bricks.js - Jerry Sievert</title>
+<link rel="stylesheet" type="text/css" href="css/presentation.css" />
+<link  href="http://fonts.googleapis.com/css?family=Ubuntu:300,300italic,regular,italic,500,500italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Give+You+Glory&v2' rel='stylesheet' type='text/css' />
+<script src="js/jquery-1.6.4.min.js"></script>
+<script src="js/fathom.js"></script>
+<script>
+$(document).ready(function(){
+  Fathom.setDefaults({
+    displayMode: 'single',
+    margin: 200
+  });
+  
+	var fathom = $('#presentation').fathom({
+		onActivateSlide: function() {
+			var $slide = $(this);
+			$slide.find('pre:first').focus();
+		}
+	});
+});
+</script>
+</head>
+<body>
+
+<div id="presentation">
+  <div class="slide">
+    <h1 id="prelogo">Building Applications With</h1>
+    <h1 id="logo">Bricks.js<h1>
+    <div class="footer">
+Jerry Sievert - <a href="http://twitter.com/jerrysievert">@jerrysievert</a>
+    </div>
+  </div>
+
+  <div class="slide">
+    <h1>What is Bricks.js?</h1>
+    <ul>
+      <li>An instant static webserver</li>
+      <code>
+        <pre>
+    $ bricks --help
+    Usage: bricks
+        --port port     [default 8080]
+        --ipaddr ipaddr [default 0.0.0.0]
+        --path path     [default "."]
+        --log log       [default none]
+        </pre>
+      </code>
+      <li>A fast routing framework</li>
+        <code>
+          <pre>
+    appServer.addRoute("/api/.+", apiHandler);
+    appServer.addRoute("/login", loginHandler);
+          </pre>
+        </code>
+      <li>Built-in plugins to get you going</li>
+        <code>
+          <pre>
+    appServer.addRoute(".+", appServer.plugins.filehandler);
+    appServer.addRoute("/admin/", appServer.plugins.session);
+          </pre>
+        </code>
+    </ul>
+  </div>
+  <div class="slide">
+    <h1>Routes</h1>
+    <h2>Multiple routes (think Apache hooks)</h2>
+    <br>
+    <br>
+    <code>
+      <pre>
+    #define 	APR_HOOK_REALLY_FIRST   (-10)
+    #define 	APR_HOOK_FIRST          0
+    #define 	APR_HOOK_MIDDLE         10
+    #define 	APR_HOOK_LAST           20
+    #define 	APR_HOOK_REALLY_LAST    30
+      </pre>
+    </code>
+    <ul>
+      <li>Pre - writeable</li>
+      <li>Main - writeable</li>
+      <li>Post - writeable</li>
+      <li>Final - read-only</li>
+    </ul>
+  </div>
+  <div class="slide">
+    <h1>Routes in Action</h1>
+    <br>
+    <br>
+    <code>
+      <pre>
+    // pre - writeable
+    appServer.addRoute(".+", star, { section: "pre" });
+
+
+    // main - writeable
+    appServer.addRoute("/api/(.+)", api, { section: "main" });
+
+
+    // post - writeable
+    appServer.addRoute(".+\.(js|css)", compress, { section: "post" });
+
+
+    // final - housekeeping
+    appServer.addRoute(".+", log, { section: "final" });
+      </pre>
+    </code>
+  </div>
+  <div class="slide">
+    <h1>Matching is Easy</h1>
+    <ul>
+      <li>Regular Expressions</li>
+      <code>
+        <pre>
+    appServer.addRoute("^/wiki/(.+)$", wiki);
+        </pre>
+      </code>
+      <li>Functions</li>
+      <code>
+        <pre>
+    appServer.addRoute(function (path, request) {
+      return path.match("^/wiki/(.+)$");
+    }, wiki);
+        </pre>
+      </code>
+      <li>Custom Routing</li>
+      <code>
+        <pre>
+    appServer = new bricks.appserver({ checkRoute: myRouter });
+        </pre>
+      </code>
+    </ul>
+  </div>
+  <div class="slide">
+    <h1>Flow Control</h1>
+    <ul>
+      <li>response.next(); // process the next matching route</li>
+      <li>response.end(); // done with this routing level, move on</li>
+      <li>response.final(); // done with any writing</li>
+    </ul>
+    <code>
+      <pre>
+    function hello (request, response, options) {
+      response.write("Hello world!");
+
+      // finished responding
+      response.end();
+    }
+      </pre>
+    </code>
+  </div>
+  <div class="slide">
+    <h1>Built-in Plugins</h1>
+    <ul>
+      <li>filehandler - simple static file handler</li>
+      <li>fourohfour - basic 404 route</li>
+      <li>redirect - simple redirect logic</li>
+      <li>loghandler - Apache style logging</li>
+      <li>sessionhandler - basic sessions</li>
+      <li>request - enhance the request object</li>
+    </ul>
+  </div>
+  <div class="slide">
+    <h1>Plugins in Action</h1>
+    <br>
+    <br>
+    <code>
+      <pre>
+    // add request to any /wiki/ routes
+    appServer.addRoute(
+      "^/wiki/.+",
+      appServer.plugins.request,
+      { section: "pre" }
+    );
+
+    // add the wiki routes, match for /edit first
+    appServer.addRoute("^/wiki/(.+)/edit$", wiki.edit);
+    appServer.addRoute("^/wiki/(.+)$", wiki);
+
+    // static files
+    appServer.addRoute(
+      ".+",
+      appServer.plugins.filehandler,
+      { basedir: "./htdocs" }
+    );
+
+    // anything else gets 404'd
+    appServer.addRoute(".+", appServer.plugins.fourohfour);
+
+    // log the results
+    appServer.addRoute(
+      ".+",
+      appServer.plugins.loghandler,
+      { section: "final", filename: "access.log" }
+    );
+      </pre>
+    </code>
+  </div>
+  <div class="slide">
+    <h1>Anatomy of a Plugin</h1>
+    <h2>What makes it different than a function()?</h2>
+    <br>
+    <br>
+    <code>
+      <pre>
+    // executed at route creation
+    exports.init = function init (options) {
+      console.log("inside init");
+      console.dir(options);
+    };
+
+
+    // executed for a route match
+    exports.plugin = function plugin (request, response, options) {
+      console.log("in plugin");
+      console.dir(options);
+      
+      response.next();
+    };
+
+    
+    // meta data
+    exports.meta = {
+        name:        'sample plugin',
+        description: 'An awesome plugin that does sample like things'
+    };
+      </pre>
+    </code>
+  </div>
+  <div class="slide">
+    <h1>Getting Bricks.js</h1>
+    <ul>
+      <li>npm install bricks [-g]</li>
+      <li>http://bricksjs.com/</li>
+      <li>https://github.com/JerrySievert/bricks</li>
+    </ul>
+  </div>
+  <div class="slide">
+    <h1>Let's Create a Wiki!</h1>
+    
+  </div>
+  <div class="slide">
+    <h1>Me</h1>
+    <ul>
+      <li>https://github.com/JerrySievert</li>
+      <li>code@legitimatesounding.com</li>
+      <li>http://legitimatesounding.com/blog/</li>
+      <li>@JerrySievert on Twitter</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

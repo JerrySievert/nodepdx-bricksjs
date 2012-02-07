@@ -1,0 +1,8 @@
+{
+  "database":   "nodepdx:nodepdx@staff.mongohq.com:10065/nodepdx",
+  "collection": "wiki",
+
+  "edit":       "^/wiki/(.+)/edit$",
+  "save":       "^/wiki/(.+)/save$",
+  "page":       "^/wiki/(.+)$"
+}
