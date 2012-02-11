@@ -8,7 +8,9 @@
   <body>
     <h1>{{title}}</h1>
     <div class="container">
-      {{body}}
+      {{{body}}}
     </div>
+    <br>
+    <a href="/wiki/{{page}}/edit">Edit</a>
   </body>
 </html>

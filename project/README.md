@@ -13,3 +13,8 @@
 * `/wiki/(page)/edit` - editable version of the page
 * `/wiki/(page)/save` - save a copy to become the most recent version of the page
 
+Don't forget to `npm install`.
+
+    $ npm install
+    $ node server.js
+

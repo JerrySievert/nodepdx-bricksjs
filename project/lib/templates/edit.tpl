@@ -7,7 +7,7 @@
   </head>
   <body>
     <div class="container">
-      <form method="POST" action="/wiki/{{id}}/save">
+      <form method="POST" action="/wiki/{{page}}/save">
         <label for="title">Title</label>
         <br>
         <input name="title" id="title" value="{{title}}" type="text">
